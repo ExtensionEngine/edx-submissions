@@ -919,6 +919,50 @@ def set_score(submission_uuid, points_earned, points_possible,
         pass
 
 
+def get_download_status(student_item_dict, staff_user):
+    """
+    Check if the submission was downloaded by a staff user and return download status.
+
+    Args:
+        student_item_dict (dict): StudentItem data.
+        staff_user (User): The staff user to check the submission download status for.
+
+    Returns:
+        True if the submission was downloaded, False if not
+    """
+    student_item = _get_or_create_student_item(student_item_dict)
+    submission = Submission.objects.filter(student_item=student_item).last()
+    if submission and submission.staff_downloads:
+        staff_users = submission.staff_downloads.get('users', [])
+        if staff_user.username in staff_users:
+            return True
+    return False
+
+
+def set_as_downloaded(student_item_dict, staff_user):
+    """
+    Set submission as downloaded by a staff user.
+
+    Args:
+        student_item_dict (dict): StudentItem data.
+        staff_user (User): The staff user which has downloaded the submission.
+    """
+    student_item = _get_or_create_student_item(student_item_dict)
+    try:
+        submission = Submission.objects.filter(student_item=student_item).last()
+        if submission and submission.staff_downloads:
+            staff_users = submission.staff_downloads.get('users', [])
+            if staff_user.username not in staff_users:
+                staff_users.append(staff_user.username)
+                submission.staff_downloads = {'users': staff_users}
+                submission.save()
+        else:
+            submission.staff_downloads = {'users': [staff_user.username]}
+            submission.save()
+    except DatabaseError as e:
+        logger.exception('{}: {}'.format(type(e), e.message))
+
+
 def _log_submission(submission, student_item):
     """
     Log the creation of a submission.
