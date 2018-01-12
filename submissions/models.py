@@ -134,6 +134,9 @@ class Submission(models.Model):
     )
     status = models.CharField(max_length=1, choices=STATUS_CHOICES, default=ACTIVE)
 
+    # Used by the SGA XBlock for storing a list of staff users which have downloaded this submission
+    staff_downloads = JSONField(null=True)
+
     # Override the default Manager with our custom one to filter out soft-deleted items
     class SoftDeletedManager(models.Manager):
         def get_queryset(self):
