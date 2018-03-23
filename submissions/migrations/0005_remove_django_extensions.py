@@ -8,7 +8,7 @@ import uuid
 class Migration(migrations.Migration):
 
     dependencies = [
-        ('submissions', '0003_submission_status'),
+        ('submissions', '0004_submission_staff_downloads'),
     ]
 
     operations = [
