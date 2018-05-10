@@ -10,8 +10,10 @@ need to then generate a matching migration for it using:
 
 """
 import logging
+from decimal import Decimal
 from uuid import uuid4
 
+from django.core.validators import MinValueValidator
 from django.db import models, DatabaseError
 from django.db.models.signals import post_save
 from django.dispatch import receiver, Signal
@@ -177,8 +179,18 @@ class Score(models.Model):
     """
     student_item = models.ForeignKey(StudentItem)
     submission = models.ForeignKey(Submission, null=True)
-    points_earned = models.PositiveIntegerField(default=0)
-    points_possible = models.PositiveIntegerField(default=0)
+    points_earned = models.DecimalField(
+        decimal_places=2,
+        default=Decimal('0.0'),
+        max_digits=6,
+        validators=[MinValueValidator(Decimal('0.0'))]
+    )
+    points_possible = models.DecimalField(
+        decimal_places=2,
+        default=Decimal('0.0'),
+        max_digits=6,
+        validators=[MinValueValidator(Decimal('0.0'))]
+    )
     created_at = models.DateTimeField(editable=False, default=now, db_index=True)
 
     # Flag to indicate that this score should reset the current "highest" score
@@ -214,9 +226,9 @@ class Score(models.Model):
             float or None
 
         """
-        if self.points_possible == 0:
+        if self.points_possible == Decimal('0.0'):
             return None
-        return float(self.points_earned) / self.points_possible
+        return float(self.points_earned / self.points_possible)
 
     def __repr__(self):
         return repr(dict(
@@ -236,7 +248,7 @@ class Score(models.Model):
             bool: Whether the score should be hidden.
 
         """
-        return self.points_possible == 0
+        return self.points_possible == Decimal('0.0')
 
     @classmethod
     def create_reset_score(cls, student_item):
@@ -264,7 +276,7 @@ class Score(models.Model):
             student_item=student_item,
             submission=None,
             points_earned=0,
-            points_possible=0,
+            points_possible=Decimal('0.0'),
             reset=True,
         )
 
